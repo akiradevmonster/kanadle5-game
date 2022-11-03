@@ -1,0 +1,205 @@
+# Technical Context
+
+## Technology Stack
+
+### Frontend
+
+- **Framework**: Next.js (App Router)
+- **State Management**: React Context API / React Hooks
+- **UI Components**: Custom components with React
+- **Styling**: Tailwind CSS
+- **Testing**: Jest with ES Module support (ESM configuration), TypeScript support, React Testing Library for component tests, @testing-library/jest-dom for DOM matchers
+- **Build Tools**: Next.js built-in build system
+
+### Backend
+
+- **Language**: TypeScript/JavaScript (Node.js runtime)
+- **Framework**: Next.js API Routes ✅
+- **API**: REST API ✅ (game endpoints implemented)
+- **Database**: Upstash Redis (via Vercel integration) ✅ (infrastructure complete with DevContainer setup)
+- **Caching**: Upstash Redis for caching ✅ (infrastructure complete)
+- **Authentication**: LINE Login (LIFF) 📋 (pending implementation)
+- **Testing**: Jest for API testing ✅ (complete coverage)
+- **Business Logic**: Service layer separation ✅ (gameService implemented)
+
+### Infrastructure
+
+- **Hosting**: Vercel
+- **CI/CD**: GitHub Actions for testing, Vercel GitHub integration for deployment
+- **Monitoring**: Vercel Analytics
+- **Containerization**: N/A (Serverless deployment)
+- **Orchestration**: N/A (Managed by Vercel)
+- **Cloud Services**: Vercel KV, Vercel Edge Functions
+
+## Development Environment Setup
+
+### Prerequisites
+
+- Node.js LTS (v22+ or v24+)
+- pnpm (package manager)
+- Git
+- LINE Developer account (for LIFF integration)
+- Vercel account (for deployment)
+
+### Setup Instructions
+
+1. Clone the repository
+2. Install dependencies with `pnpm install`
+3. Set up environment variables for local development (copy `.env.local.example` to `.env.local`)
+4. Run the development server with `pnpm dev`
+5. Run tests with `pnpm test` or `pnpm test:watch` for watch mode
+6. Run integration tests with `pnpm test:integration` (uses ESM configuration)
+
+### Environment Configuration
+
+**DevContainer Environment**: Complete Redis development environment with Docker Compose orchestration (Redis 7 + Upstash HTTP proxy)
+
+For detailed Redis environment configuration across all environments, see `.ai-agent/memory-bank/infrastructure/redis-environment-configuration.md`
+
+```env
+# LINE LIFF Configuration
+NEXT_PUBLIC_LIFF_ID=your-liff-id
+LIFF_CHANNEL_ID=your-channel-id
+LIFF_CHANNEL_SECRET=your-channel-secret
+
+# Redis Configuration (Upstash)
+KV_REST_API_URL=your-upstash-rest-api-url
+KV_REST_API_TOKEN=your-upstash-rest-api-token
+
+# Environment-specific Redis DB (for local development)
+REDIS_DB=0  # 0 for development, 1 for testing
+
+# Game Configuration
+DAILY_WORD_REFRESH_TIME=00:00:00 # Japan time
+```
+
+### Local Development Workflow
+
+1. **DevContainer Setup**: Use VS Code DevContainer for consistent Redis development environment
+2. Start the development server with `pnpm dev`
+3. Test with LINE LIFF Simulator for LINE-specific features
+4. Use browser developer tools for debugging
+5. Run Redis integration tests with `pnpm test:integration`
+6. Implement features and run tests locally
+7. Commit changes and push to GitHub for deployment
+
+## External Dependencies
+
+### APIs
+
+- **LINE LIFF API**:
+
+  - Purpose: Integration with LINE for mini app functionality
+  - Documentation: <https://developers.line.biz/en/docs/liff/>
+  - Authentication: LIFF ID, Channel ID, Channel Secret
+  - Rate Limits: Standard LINE API rate limits
+  - Environment Variables: NEXT_PUBLIC_LIFF_ID, LIFF_CHANNEL_ID, LIFF_CHANNEL_SECRET
+
+- **LINE Login API**:
+  - Purpose: User authentication
+  - Documentation: <https://developers.line.biz/en/docs/line-login/>
+  - Authentication: Same as LIFF
+  - Rate Limits: Standard LINE API rate limits
+  - Environment Variables: Same as LIFF
+
+### Libraries and Packages
+
+- **@line/liff**:
+
+  - Purpose: LINE Front-end Framework SDK
+  - Documentation: <https://developers.line.biz/en/reference/liff-api/>
+  - Version: Latest stable
+  - Notes: Required for LINE Mini App functionality
+
+- **@upstash/redis**:
+  - Purpose: Redis client for serverless environments
+  - Documentation: <https://github.com/upstash/upstash-redis>
+  - Version: Latest stable
+  - Notes: Used for storing game state, user data, and daily words
+  - Environment: Works with Upstash Redis on Vercel and local Redis containers
+
+## Technical Constraints
+
+- Must comply with LINE Mini App specifications and guidelines
+- Mobile-first design required for optimal LINE experience
+- Maximum response time for API calls should be under 1 second
+- Must support all browsers compatible with LINE LIFF
+- Resource usage must stay within Vercel free/paid plan limitations
+- TypeScript strict mode enabled - use `type` aliases instead of `interface` to prevent implicit declaration merging
+
+## Deployment Process
+
+### Environments
+
+- **Local Development**:
+
+  - URL: <http://localhost:3000>
+  - Redis: Local container (DB0)
+  - Access: Development team only
+
+- **Preview**:
+
+  - URL: [Generated by Vercel per-branch]
+  - Deployment Process: Automatic deployment from feature branches
+  - Redis: Upstash `kanadle5-game-preview` database
+  - Access: Development team for PR reviews
+
+- **Production**:
+  - URL: [kanadle5.vercel.app]
+  - Deployment Process: Automatic deployment from main branch
+  - Redis: Upstash `kanadle5-game` database
+  - Access: Public via LINE
+
+### Deployment Checklist
+
+- All tests passing
+- Performance audit completed
+- Security checks passed
+- LINE LIFF configuration verified
+- Database migrations applied if needed
+- Accessibility requirements met
+
+## Performance Benchmarks
+
+- Initial load time under 3 seconds
+- Time-to-interactive under 4 seconds
+- API response time under 500ms
+- Core Web Vitals metrics meeting "Good" thresholds
+
+## Security Requirements
+
+- Secure LINE authentication implementation
+- Protection against common web vulnerabilities (XSS, CSRF)
+- No sensitive data stored in client-side storage
+- Rate limiting for API endpoints
+- Data validation for all user inputs
+
+## Game-Specific Technical Details
+
+### Word List Implementation
+
+- ✅ Word list stored as JSON in the codebase with TypeScript type definitions (WordEntry[])
+- ✅ Word validation against dictionary implemented for player submissions
+- 📋 Daily word selection algorithm uses date as seed for consistent selection (mock implementation active)
+- ✅ Redis infrastructure ready for word persistence (DevContainer environment operational)
+
+### Hiragana Input System
+
+- ✅ Custom on-screen keyboard for hiragana input (HiraganaKeyboard component)
+- ✅ Color-coding of keyboard keys based on guess results with comprehensive feedback
+- ✅ Input validation to ensure only basic hiragana characters (excluding 'を')
+- ✅ Mobile-optimized 5-row layout with accessibility features
+
+### Game State Management
+
+- ✅ Game state managed with custom useGameState React hook for client-side gameplay
+- ✅ Complete state management including input, attempts, game status, and error handling
+- ✅ Client-server state separation with updateClientGameState and updateServerGameState functions
+- 📋 Persistent storage in database for logged-in users (pending LINE LIFF integration)
+- 📋 Daily reset mechanism triggered at midnight Japan time (pending full getDailyWord implementation)
+
+### Sharing Functionality
+
+- Emoji-based results generation (similar to Wordle)
+- Integration with LINE sharing API
+- Non-spoiler format maintaining game integrity
