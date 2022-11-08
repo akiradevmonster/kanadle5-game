@@ -1,0 +1,32 @@
+# Project Memory for Cline
+
+This document serves as the main entry point for Cline to access project memory files. Use these resources to guide your behavior and understand the project context.
+
+## Rules and Guidelines
+
+Follow these documents to understand how to approach this project:
+
+- [Basic Behavior and Principles](.ai-agent/rules/01_basic.md)
+- [Memory Usage Guidelines](.ai-agent/rules/02_memory.md)
+- [Git and Version Control Guidelines](.ai-agent/rules/03_git.md)
+
+## Project Memory and Context
+
+Review these files to understand the project details:
+
+- [Project Brief](.ai-agent/memory/projectbrief.md) - Core requirements and goals
+- [Product Context](.ai-agent/memory/productContext.md) - Background and user experience goals
+- [Active Context](.ai-agent/memory/activeContext.md) - Current focus and next steps
+- [System Patterns](.ai-agent/memory/systemPatterns.md) - Architecture and technical decisions
+- [Technical Context](.ai-agent/memory/techContext.md) - Technology stack and constraints
+- [Progress Status](.ai-agent/memory/progress.md) - Current state and known issues
+
+## Additional Knowledge
+
+- [Memory Bank](.ai-agent/memory-bank/) - Contains specialized knowledge relevant to this project
+
+## Important Notes
+
+- Always begin by reviewing the Active Context
+- Refer to these files regularly throughout your work
+- Follow established patterns and maintain consistency
