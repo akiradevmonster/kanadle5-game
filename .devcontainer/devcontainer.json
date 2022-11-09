@@ -1,0 +1,62 @@
+{
+  "name": "Kanadle5 Game Development",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22",
+      "pnpmVersion": "10",
+      "nodeGypDependencies": true,
+      "installYarnUsingApt": false
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "configureZshAsDefaultShell": true,
+      "username": "node",
+      "updateRCFile": false
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:latest": {}
+  },
+  "updateRemoteUserUID": true,
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "typescript.preferences.includePackageJsonAutoImports": "auto",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        }
+      }
+    }
+  },
+  "forwardPorts": [3000, 8079, 6379],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js App",
+      "onAutoForward": "notify"
+    },
+    "8079": {
+      "label": "Serverless Redis HTTP (SRH)",
+      "onAutoForward": "silent"
+    },
+    "6379": {
+      "label": "Redis Server",
+      "onAutoForward": "silent"
+    }
+  },
+  "postCreateCommand": "pnpm install && cd /usr/share/doc/git/contrib/diff-highlight && sudo npm x --yes -- tiged git/git/contrib/diff-highlight --force && sudo make && sudo install -m 755 diff-highlight /usr/local/bin",
+  "postStartCommand": "echo 'Development environment ready'",
+  "remoteUser": "node"
+}
