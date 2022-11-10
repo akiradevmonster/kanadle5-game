@@ -1,0 +1,69 @@
+services:
+  app:
+    image: node:22-bullseye-slim
+    working_dir: /workspace
+    volumes:
+      - ../:/workspace:cached
+    command: sleep infinity
+    environment:
+      - NODE_ENV=development
+    user: '1000:1000'
+    depends_on:
+      - redis
+      - upstash-redis
+    networks:
+      - development
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - development
+
+  upstash-redis:
+    image: hiett/serverless-redis-http:latest
+    restart: unless-stopped
+    ports:
+      - '8079:80'
+    environment:
+      - SRH_MODE=env
+      - SRH_TOKEN=local-token
+      - SRH_CONNECTION_STRING=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: |
+        if command -v curl >/dev/null 2>&1; then
+          curl -f http://localhost:80/
+        elif command -v wget >/dev/null 2>&1; then
+          wget --quiet --tries=1 --spider http://localhost:80/
+        elif command -v nc >/dev/null 2>&1; then
+          nc -z localhost 80
+        else
+          echo "No health check tool available"
+          exit 0
+        fi
+        interval: 10s
+        timeout: 5s
+        retries: 5
+        start_period: 20s
+    networks:
+      - development
+
+volumes:
+  redis_data:
+
+networks:
+  development:
+    driver: bridge
