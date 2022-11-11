@@ -1,0 +1,106 @@
+name: Integration Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_run:
+    workflows: ["CI"]
+    branches: [ main ]
+    types:
+      - completed
+
+jobs:
+  integration-test:
+    name: Integration Tests on Node ${{ matrix.node }}
+    # Only run if the CI workflow succeeded or this is a direct trigger
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['22.x', '24.x']
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+      
+      upstash-redis:
+        image: hiett/serverless-redis-http:latest
+        ports:
+          - 8079:80
+        env:
+          SRH_MODE: env
+          SRH_TOKEN: github-actions-token
+          SRH_CONNECTION_STRING: redis://redis:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node }}
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9
+        run_install: false
+
+    - name: Get pnpm store directory
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+    - name: Setup pnpm cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+    
+    - name: Set test environment variables
+      run: |
+        echo "KV_REST_API_URL=http://localhost:8079" >> $GITHUB_ENV
+        echo "KV_REST_API_TOKEN=github-actions-token" >> $GITHUB_ENV
+        echo "NODE_ENV=test" >> $GITHUB_ENV
+
+    - name: Wait for Redis services
+      run: |
+        echo "Waiting for Redis..."
+        for i in {1..30}; do
+          if redis-cli -h localhost -p 6379 ping; then
+            echo "Redis is ready"
+            break
+          fi
+          sleep 1
+        done
+        echo "Waiting for Upstash Redis HTTP..."
+        for i in {1..30}; do
+          if curl -s http://localhost:8079/ping > /dev/null; then
+            echo "Upstash Redis HTTP is ready"
+            break
+          fi
+          sleep 1
+        done
+
+    - name: Run integration tests
+      run: pnpm test:integration
+
+    # Optional: Upload test results
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: integration-test-results-${{ matrix.node }}
+        path: coverage/
+        retention-days: 7
